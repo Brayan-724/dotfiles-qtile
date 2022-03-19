@@ -36,15 +36,9 @@ from libqtile.utils import guess_terminal
 mod = "mod4"
 terminal = guess_terminal()
 
-spacer = widget.TextBox(" ")
-
 keys = [
     # A list of available commands that can be bound to keys can be found
     # at https://docs.qtile.org/en/latest/manual/config/lazy.html
-
-    # Qminimize
-    Key([mod, "shift"], "m", lazy.spawn('Qminimize -u'), desc="Minimize window"), # - u to show the rofi menu
-    Key([mod], "m", lazy.spawn("Qminimize -m")), # -m to minimize
 
     # Switch between windows
     Key([mod], "h", lazy.layout.left(), desc="Move focus to left"),
@@ -81,7 +75,7 @@ keys = [
     # multiple stack panes
     Key([mod, "shift"], "Return", lazy.layout.toggle_split(),
         desc="Toggle between split and unsplit s;ides of stack"),
-    Key([mod], "Return", lazy.spawn("terminator"), desc="Launch terminal"),
+    Key([mod], "Return", lazy.spawn("terminator -e \"cd $PWD && terminator\""), desc="Launch terminal"),
 
     # Toggle between different layouts as defined below
     Key([mod], "Tab", lazy.next_layout(), desc="Toggle between layouts"),
@@ -91,31 +85,24 @@ keys = [
     Key([mod, "control"], "q", lazy.shutdown(), desc="Shutdown Qtile"),
     Key([mod], "r", lazy.spawncmd(),
         desc="Spawn a command using a prompt widget"),
-
-    # Toggle between keyboard layouts
-    Key([mod], "e", lazy.widget["keyboardlayout"].next_keyboard(), 
-        desc="Toggle between keyboard layouts"),
-    #Key([mod, "shift"], ".", lazy.run_extension(extension.WindowList()))
+    #Key([mod, "shft"], ".", lazy.run_extension(extension.WindowList()))
 ]
 
-groups = [Group(i, label="•") for i in "123456789"]
+groups = [Group(i) for i in "123456789"]
 
 for i in groups:
-    #group = Group(i)
-    group = i
-
     keys.extend([
         # mod1 + letter of group = switch to group
-        Key([mod], group.name, lazy.group[group.name].toscreen(),
-            desc="Switch to group {}".format(group.name)),
+        Key([mod], i.name, lazy.group[i.name].toscreen(),
+            desc="Switch to group {}".format(i.name)),
 
         # mod1 + shift + letter of group = switch to & move focused window to group
-        Key([mod, "shift"], group.name, lazy.window.togroup(group.name, switch_group=True),
-            desc="Switch to & move focused window to group {}".format(group.name)),
+        Key([mod, "shift"], i.name, lazy.window.togroup(i.name, switch_group=True),
+            desc="Switch to & move focused window to group {}".format(i.name)),
         # Or, use below if you prefer not to switch to that group.
         # # mod1 + shift + letter of group = move focused window to group
-        Key([mod, "control"], group.name, lazy.window.togroup(group.name),
-             desc="move focused window to group {}".format(group.name)),
+        # Key([mod, "shift"], i.name, lazy.window.togroup(i.name),
+        #     desc="move focused window to group {}".format(i.name)),
     ])
 
 layouts = [
@@ -140,129 +127,38 @@ layouts = [
 ]
 
 widget_defaults = dict(
-    font='Sauce Code Pro Nerd Font Complete Mono',
-    fontsize=10,
+    font='sans',
+    fontsize=12,
     padding=3,
-    foreground="CFCFEA",
 )
 extension_defaults = widget_defaults.copy()
-
-def parser_text_task(text):
-    # If has "-" then split and return last part
-    if "-" in text:
-        return text.split("-")[-1]
-    
-    # If has ":" then split and return last part
-    if ":" in text:
-        return text.split(":")[-1]
-
-    # If has "/" then split and return last part
-    if "/" in text:
-        return text.split("/")[-1]
-
-    # If has " " then split and return last part
-    if " " in text:
-        return text.split(" ")[-1]
-
-    # Then return the first 10 characters
-    return text[:10]
 
 screens = [
     Screen(
         top=bar.Bar(
             [
-                widget.CurrentScreen(
-                    active_text="•",
-                    inactive_text="•"
-                ),
-                widget.CurrentLayoutIcon(scale=0.5, padding=0),
-                widget.GroupBox(
-                    borderwidth=2,
-                    highlight_method="line",
-                    highlight_color=["000000.0", "000000.0"],
-                    block_highlight_text_color="902296",
-                    this_current_screen_border="58428A",
-                    this_screen_border="3D2E60",
-                    other_current_screen_border="58428A",
-                    other_screen_border="3D2E60",
-                    hide_unused=False,
-                    active="701A74",
-                    inactive="352853",
-                    fontsize=12,
-                    spacing=0,
-                    rounded=False,
-                    disable_drag=True
-                ),
-                widget.Prompt(
-                    prompt=" ",
-                    fontsize=12,
-                ),
-                spacer,
-                widget.WidgetBox(
-                    widgets=[
-                        widget.CPUGraph(
-                            border_color="902296",
-                            graph_color="902296",
-                            fill_color="3D2E60",
-                        ),
-                        widget.MemoryGraph(
-                            border_color="902296",
-                            graph_color="902296",
-                            fill_color="3D2E60",
-                        ),
-                    ],
-                    text_open="📈",
-                    text_closed="📉",
-                    background="67855703",
-                    fontsize=14,
-                    margin=[0, 0, 2, 0],
+                widget.CurrentLayout(),
+                widget.GroupBox(),
+                widget.Prompt(),
+                widget.CPUGraph(),
+                widget.MemoryGraph(),
+                    # widget.WindowName(),
+                widget.Chord(
+                    chords_colors={
+                        'launch': ("#ff0000", "#ffffff"),
+                    },
+                    name_transform=lambda name: name.upper(),
                 ),
                 widget.Spacer(),
-                widget.Notify(
-                    # audius_icon="",
-                    audiofile="/home/apika/Downloads/mixkit-sci-fi-click-900.wav",
-                ),
-                widget.Spacer(),
-                widget.TextBox(
-                    text="",
-                    fontsize=14,
-                ),
-                widget.Pomodoro(
-                    length_pomodori=20,
-                    length_short_break=5,
-                    length_long_break=10,
-                ),
-                widget.KeyboardLayout(
-                    configured_keyboards=["us", "es"],
-                    foreground="902296",
-                ),
-                # widget.Systray(),
-                #widget.Wlan(interface="wlp13s0b1", format="WIFI: {essid}"),
+                widget.Systray(),
                 widget.Volume(channel="Capture"),
-                widget.Sep(),
-                widget.Clock(format='%d %m %Y'),
-                widget.Sep(),
-                widget.Clock(format='%I:%M %p'),
-                # widget.QuickExit(),
+                widget.PulseVolume(),
+                widget.Clock(format='%d-%m-%Y | %I:%M %p'),
+                widget.QuickExit(),
             ],
             24,
-            margin=2,
-            background="160003.2",
         ),
     ),
-    Screen(
-        top=bar.Bar(
-            [
-                widget.CurrentScreen(
-                    active_text="•",
-                    inactive_text="•"
-                ),
-            ],
-            24,
-            margin=2,
-            background="160003.2",
-        ),
-    )
 ]
 
 # Drag floating layouts.
@@ -296,12 +192,9 @@ reconfigure_screens = True
 
 # If things like steam games want to auto-minimize themselves when losing
 # focus, should we respect this or not?
-auto_minimize = False
+auto_minimize = True
 
 autostart = [
-    "picom --vsync --shadow --inactive-opacity 0.95 &",
-    "feh --bg-fill /home/apika/Downloads/a.jpg"
-    #"xset led named 'Scroll Lock'"
 ]
 
 for x in autostart:
