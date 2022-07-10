@@ -36,9 +36,24 @@ from libqtile.utils import guess_terminal
 mod = "mod4"
 terminal = guess_terminal()
 
+spacer = widget.TextBox(" ")
+white = {
+    "default": "CFCFEA",
+    "pure": "ffffff",
+}
+primary = {
+    "default": "902296",
+    "light": "58428A",
+    "dark": "3D2E60",
+}
+
 keys = [
     # A list of available commands that can be bound to keys can be found
     # at https://docs.qtile.org/en/latest/manual/config/lazy.html
+
+    # Qminimize
+    Key([mod, "shift"], "m", lazy.spawn('Qminimize -u'), desc="Minimize window"), # - u to show the rofi menu
+    Key([mod], "m", lazy.spawn("Qminimize -m")), # -m to minimize
 
     # Switch between windows
     Key([mod], "h", lazy.layout.left(), desc="Move focus to left"),
@@ -75,7 +90,7 @@ keys = [
     # multiple stack panes
     Key([mod, "shift"], "Return", lazy.layout.toggle_split(),
         desc="Toggle between split and unsplit s;ides of stack"),
-    Key([mod], "Return", lazy.spawn("terminator -e \"cd $PWD && terminator\""), desc="Launch terminal"),
+    Key([mod], "Return", lazy.spawn("terminator"), desc="Launch terminal"),
 
     # Toggle between different layouts as defined below
     Key([mod], "Tab", lazy.next_layout(), desc="Toggle between layouts"),
@@ -85,24 +100,31 @@ keys = [
     Key([mod, "control"], "q", lazy.shutdown(), desc="Shutdown Qtile"),
     Key([mod], "r", lazy.spawncmd(),
         desc="Spawn a command using a prompt widget"),
-    #Key([mod, "shft"], ".", lazy.run_extension(extension.WindowList()))
+
+    # Toggle between keyboard layouts
+    Key([mod], "e", lazy.widget["keyboardlayout"].next_keyboard(), 
+        desc="Toggle between keyboard layouts"),
+    #Key([mod, "shift"], ".", lazy.run_extension(extension.WindowList()))
 ]
 
-groups = [Group(i) for i in "123456789"]
+groups = [Group(i, label="•") for i in "123456789"]
 
 for i in groups:
+    #group = Group(i)
+    group = i
+
     keys.extend([
         # mod1 + letter of group = switch to group
-        Key([mod], i.name, lazy.group[i.name].toscreen(),
-            desc="Switch to group {}".format(i.name)),
+        Key([mod], group.name, lazy.group[group.name].toscreen(),
+            desc="Switch to group {}".format(group.name)),
 
         # mod1 + shift + letter of group = switch to & move focused window to group
-        Key([mod, "shift"], i.name, lazy.window.togroup(i.name, switch_group=True),
-            desc="Switch to & move focused window to group {}".format(i.name)),
+        Key([mod, "shift"], group.name, lazy.window.togroup(group.name, switch_group=True),
+            desc="Switch to & move focused window to group {}".format(group.name)),
         # Or, use below if you prefer not to switch to that group.
         # # mod1 + shift + letter of group = move focused window to group
-        # Key([mod, "shift"], i.name, lazy.window.togroup(i.name),
-        #     desc="move focused window to group {}".format(i.name)),
+        Key([mod, "control"], group.name, lazy.window.togroup(group.name),
+             desc="move focused window to group {}".format(group.name)),
     ])
 
 layouts = [
@@ -117,7 +139,7 @@ layouts = [
     # layout.Stack(num_stacks=2),
     # layout.Bsp(),
     # layout.Matrix(),
-    #layout.MonadTall(border_width=1, border_focus="#00ff00"),
+    # layout.MonadTall(border_width=1, border_focus="#00ff00"),
     # layout.MonadWide(),
     # layout.RatioTile(),
     # layout.Tile(),
@@ -127,9 +149,10 @@ layouts = [
 ]
 
 widget_defaults = dict(
-    font='sans',
-    fontsize=12,
+    font='Sauce Code Pro Nerd Font Complete Mono',
+    fontsize=10,
     padding=3,
+    foreground=white["default"],
 )
 extension_defaults = widget_defaults.copy()
 
@@ -137,28 +160,118 @@ screens = [
     Screen(
         top=bar.Bar(
             [
-                widget.CurrentLayout(),
-                widget.GroupBox(),
-                widget.Prompt(),
-                widget.CPUGraph(),
-                widget.MemoryGraph(),
-                    # widget.WindowName(),
-                widget.Chord(
-                    chords_colors={
-                        'launch': ("#ff0000", "#ffffff"),
-                    },
-                    name_transform=lambda name: name.upper(),
+                widget.CurrentScreen(
+                    active_text="•",
+                    inactive_text="•"
+                ),
+                widget.CurrentLayoutIcon(scale=0.5, padding=0),
+                widget.GroupBox(
+                    borderwidth=2,
+                    highlight_method="line",
+                    highlight_color=["000000.0", "000000.0"],
+                    block_highlight_text_color=primary["default"],
+                    this_current_screen_border=primary["light"],
+                    this_screen_border=primary["dark"],
+                    other_current_screen_border=primary["light"],
+                    other_screen_border=primary["dark"],
+                    hide_unused=False,
+                    active="701A74",
+                    inactive="352853",
+                    fontsize=12,
+                    spacing=0,
+                    rounded=False,
+                    disable_drag=True
+                ),
+                widget.Prompt(
+                    prompt=" ",
+                    fontsize=12,
+                ),
+                spacer,
+                widget.WidgetBox(
+                    widgets=[
+                        widget.CPUGraph(
+                            border_color=primary["default"],
+                            graph_color=primary["default"],
+                            fill_color=primary["dark"],
+                        ),
+                        widget.MemoryGraph(
+                            border_color=primary["default"],
+                            graph_color=primary["default"],
+                            fill_color=primary["dark"],
+                        ),
+                        widget.TextBox(
+                            text="Net",
+                            fontsize=12,
+                            foreground=primary["default"],
+                        ),
+                        widget.TextBox(
+                            text="",
+                            foreground="50D3C2",
+                            padding=0,
+                        ),
+                        widget.NetGraph(
+                            bandwidth_type="down",
+                            border_color=primary["default"],
+                            graph_color=primary["default"],
+                            fill_color=primary["dark"],
+                        ),
+                        widget.TextBox(
+                            text="",
+                            foreground="D350A2",
+                            padding=0,
+                        ),
+                        widget.NetGraph(
+                            bandwidth_type="up",
+                            border_color=primary["default"],
+                            graph_color=primary["default"],
+                            fill_color=primary["dark"],
+                        ),
+                    ],
+                    text_open="📈",
+                    text_closed="📉",
+                    background="67855703",
+                    fontsize=14,
+                    margin=[0, 0, 2, 0],
                 ),
                 widget.Spacer(),
-                widget.Systray(),
-                widget.Volume(channel="Capture"),
-                widget.PulseVolume(),
-                widget.Clock(format='%d-%m-%Y | %I:%M %p'),
-                widget.QuickExit(),
+                widget.Notify(
+                    audiofile="/home/apika/Downloads/mixkit-sci-fi-click-900.wav",
+                ),
+                widget.Spacer(),
+                widget.TextBox(
+                    text="",
+                    fontsize=14,
+                ),
+                widget.Pomodoro(
+                    length_pomodori=30,
+                    length_short_break=5,
+                    length_long_break=15,
+                ),
+                widget.KeyboardLayout(
+                    configured_keyboards=["us", "es", "ru"],
+                    foreground=primary["default"],
+                ),
+                widget.Wlan(interface="wlp13s0b1", format="WIFI: {essid}"),
+                widget.Sep(),
+                widget.Volume(emoji=True, channel="Capture"),
+                widget.Sep(),
+                widget.Clock(format='%d %m %Y'),
+                widget.Sep(),
+                widget.Clock(format='%I:%M %p'),
             ],
             24,
+            margin=2,
+            background="160003.2",
         ),
     ),
+    Screen(
+        top=bar.Bar(
+            [],
+            24,
+            margin=2,
+            background="160003.2",
+        ),
+    )
 ]
 
 # Drag floating layouts.
@@ -192,9 +305,12 @@ reconfigure_screens = True
 
 # If things like steam games want to auto-minimize themselves when losing
 # focus, should we respect this or not?
-auto_minimize = True
+auto_minimize = False
 
 autostart = [
+    "picom --vsync --shadow --inactive-opacity 0.95 &",
+    "feh --bg-fill /home/apika/Downloads/a.jpg"
+    #"xset led named 'Scroll Lock'"
 ]
 
 for x in autostart:

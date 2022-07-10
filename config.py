@@ -28,15 +28,24 @@ import os
 
 from typing import List  # noqa: F401
 
-from libqtile import bar, layout, widget, extension
+from libqtile import bar, layout, widget, extension, qtile
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
 from libqtile.utils import guess_terminal
 
 mod = "mod4"
-terminal = guess_terminal()
+terminal = "kitty" # guess_terminal()
 
 spacer = widget.TextBox(" ")
+white = {
+    "default": "CFCFEA",
+    "pure": "ffffff",
+}
+primary = {
+    "default": "902296",
+    "light": "58428A",
+    "dark": "3D2E60",
+}
 
 keys = [
     # A list of available commands that can be bound to keys can be found
@@ -81,7 +90,7 @@ keys = [
     # multiple stack panes
     Key([mod, "shift"], "Return", lazy.layout.toggle_split(),
         desc="Toggle between split and unsplit s;ides of stack"),
-    Key([mod], "Return", lazy.spawn("terminator"), desc="Launch terminal"),
+    Key([mod], "Return", lazy.spawn(terminal), desc="Launch terminal"),
 
     # Toggle between different layouts as defined below
     Key([mod], "Tab", lazy.next_layout(), desc="Toggle between layouts"),
@@ -130,42 +139,36 @@ layouts = [
     # layout.Stack(num_stacks=2),
     # layout.Bsp(),
     # layout.Matrix(),
-    #layout.MonadTall(border_width=1, border_focus="#00ff00"),
+    # layout.MonadTall(border_width=1, border_focus="#00ff00"),
     # layout.MonadWide(),
     # layout.RatioTile(),
     # layout.Tile(),
     # layout.TreeTab(),
     # layout.VerticalTile(),
-    # layout.Zoomy(),
+    layout.Zoomy(),
 ]
 
 widget_defaults = dict(
-    font='Sauce Code Pro Nerd Font Complete Mono',
+    font='sans',
     fontsize=10,
     padding=3,
-    foreground="CFCFEA",
+    foreground=white["default"],
 )
 extension_defaults = widget_defaults.copy()
 
-def parser_text_task(text):
-    # If has "-" then split and return last part
-    if "-" in text:
-        return text.split("-")[-1]
+def app_btn(text, cmd, fontsize, foreground):
+    def mouse_callback_app_btn():
+        qtile.cmd_spawn(cmd)
     
-    # If has ":" then split and return last part
-    if ":" in text:
-        return text.split(":")[-1]
-
-    # If has "/" then split and return last part
-    if "/" in text:
-        return text.split("/")[-1]
-
-    # If has " " then split and return last part
-    if " " in text:
-        return text.split(" ")[-1]
-
-    # Then return the first 10 characters
-    return text[:10]
+    return widget.TextBox(
+        text=text,
+        padding=6,
+        fontsize=fontsize,
+        foreground=foreground,
+        mouse_callbacks={
+            "Button1": mouse_callback_app_btn
+        }
+    )
 
 screens = [
     Screen(
@@ -173,23 +176,24 @@ screens = [
             [
                 widget.CurrentScreen(
                     active_text="•",
-                    inactive_text="•"
+                    inactive_text="•",
+                    fontsize=14
                 ),
                 widget.CurrentLayoutIcon(scale=0.5, padding=0),
                 widget.GroupBox(
                     borderwidth=2,
                     highlight_method="line",
                     highlight_color=["000000.0", "000000.0"],
-                    block_highlight_text_color="902296",
-                    this_current_screen_border="58428A",
-                    this_screen_border="3D2E60",
-                    other_current_screen_border="58428A",
-                    other_screen_border="3D2E60",
+                    block_highlight_text_color=primary["default"],
+                    this_current_screen_border=primary["light"],
+                    this_screen_border=primary["dark"],
+                    other_current_screen_border=primary["light"],
+                    other_screen_border=primary["dark"],
                     hide_unused=False,
                     active="701A74",
                     inactive="352853",
                     fontsize=12,
-                    spacing=0,
+                    spacing=2,
                     rounded=False,
                     disable_drag=True
                 ),
@@ -201,14 +205,41 @@ screens = [
                 widget.WidgetBox(
                     widgets=[
                         widget.CPUGraph(
-                            border_color="902296",
-                            graph_color="902296",
-                            fill_color="3D2E60",
+                            border_color=primary["default"],
+                            graph_color=primary["default"],
+                            fill_color=primary["dark"],
                         ),
                         widget.MemoryGraph(
-                            border_color="902296",
-                            graph_color="902296",
-                            fill_color="3D2E60",
+                            border_color=primary["default"],
+                            graph_color=primary["default"],
+                            fill_color=primary["dark"],
+                        ),
+                        widget.TextBox(
+                            text="Net",
+                            fontsize=12,
+                            foreground=primary["default"],
+                        ),
+                        widget.TextBox(
+                            text="",
+                            foreground="50D3C2",
+                            padding=0,
+                        ),
+                        widget.NetGraph(
+                            bandwidth_type="down",
+                            border_color=primary["default"],
+                            graph_color=primary["default"],
+                            fill_color=primary["dark"],
+                        ),
+                        widget.TextBox(
+                            text="",
+                            foreground="D350A2",
+                            padding=0,
+                        ),
+                        widget.NetGraph(
+                            bandwidth_type="up",
+                            border_color=primary["default"],
+                            graph_color=primary["default"],
+                            fill_color=primary["dark"],
                         ),
                     ],
                     text_open="📈",
@@ -219,7 +250,6 @@ screens = [
                 ),
                 widget.Spacer(),
                 widget.Notify(
-                    # audius_icon="",
                     audiofile="/home/apika/Downloads/mixkit-sci-fi-click-900.wav",
                 ),
                 widget.Spacer(),
@@ -228,22 +258,23 @@ screens = [
                     fontsize=14,
                 ),
                 widget.Pomodoro(
-                    length_pomodori=20,
+                    length_pomodori=30,
                     length_short_break=5,
-                    length_long_break=10,
+                    length_long_break=15,
                 ),
                 widget.KeyboardLayout(
                     configured_keyboards=["us", "es"],
-                    foreground="902296",
+                    foreground=primary["default"],
                 ),
-                # widget.Systray(),
-                #widget.Wlan(interface="wlp13s0b1", format="WIFI: {essid}"),
-                widget.Volume(channel="Capture"),
+                widget.Wlan(interface="wlp13s0b1", format="WIFI: {essid}"),
                 widget.Sep(),
-                widget.Clock(format='%d %m %Y'),
+                widget.Volume(emoji=True, channel="Capture"),
                 widget.Sep(),
-                widget.Clock(format='%I:%M %p'),
-                # widget.QuickExit(),
+                widget.Clock(format='%d %m', fontsize=13),
+                widget.Clock(format="%y"),
+                widget.Sep(),
+                widget.Clock(format='%H %M', fontsize=13),
+                widget.Clock(format="%S"),
             ],
             24,
             margin=2,
@@ -253,10 +284,24 @@ screens = [
     Screen(
         top=bar.Bar(
             [
-                widget.CurrentScreen(
-                    active_text="•",
-                    inactive_text="•"
+                app_btn(
+                    text="",
+                    cmd=terminal,
+                    fontsize=18,
+                    foreground="99BB88"
                 ),
+                app_btn(
+                    text="",
+                    cmd="opera",
+                    fontsize=18,
+                    foreground="FF1B2D"
+                ),
+                app_btn(
+                    text="ﭮ",
+                    cmd="discord",
+                    fontsize=18,
+                    foreground="7289DA"
+                )
             ],
             24,
             margin=2,
@@ -300,7 +345,7 @@ auto_minimize = False
 
 autostart = [
     "picom --vsync --shadow --inactive-opacity 0.95 &",
-    "feh --bg-fill /home/apika/Downloads/a.jpg"
+    "feh --bg-fill /home/apika/wallpapers/w2.jpg"
     #"xset led named 'Scroll Lock'"
 ]
 
